@@ -5,4 +5,5 @@ public interface PlaceHolder {
 	 * pushed to the repo. You man immediately delete it as it is of no use for your project.  
 	 */
 
+	//this is a comment to demonstrate Git persistence
 }
