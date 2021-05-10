@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.revature.models.Account;
 import com.revature.models.AccountDTO;
 import com.revature.models.JSONmessage;
+import com.revature.models.TransferDTO;
 import com.revature.services.AccountService;
 import com.revature.services.UserService;
 
@@ -188,6 +189,220 @@ public class AccountController {
 		Account updatedAccount = aServ.getAccountById(aDTO.getAccountID());
 		String updatedAccountJSON = om.writeValueAsString(updatedAccount);
 		out.print(updatedAccountJSON);
+		res.setStatus(200);
+		res.setContentType("application/json");
+	}
+
+	public void withdraw(HttpServletRequest req, HttpServletResponse res) throws IOException{
+		//req body comes in with many <br>. we add line by line via StringBuilder
+		StringBuilder in = new StringBuilder();
+
+		//req body has a builtin method to return an Object that reads the body line by line
+		BufferedReader reader = req.getReader();
+
+		String line = reader.readLine();
+		while(line != null) {
+			in.append(line);
+			line = reader.readLine();
+		}
+		String fullBodyContents = new String(in);
+
+		//now the object mapper can read the req Body into a Java Object
+		System.out.println(fullBodyContents);
+		AccountDTO aDTO = om.readValue(fullBodyContents, AccountDTO.class);
+		System.out.println("This DTO should only have 2 things");
+		System.out.println(aDTO.accountID);
+		System.out.println(aDTO.statusID + " should be null");
+		System.out.println(aDTO.amount);
+
+		//ensure that only admin or currentUserID = {accountID} request this
+		HttpSession ses = req.getSession(false);
+		PrintWriter out = res.getWriter();
+		JSONmessage unauthorizedMsg = new JSONmessage("The requested action is not permitted");
+		String unauthorized = om.writeValueAsString(unauthorizedMsg);
+
+		if(ses == null) {
+			out = res.getWriter();
+			System.out.println("No Active Sesssion in POST /accounts/withdraw");
+			out.print(unauthorized);
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		} 
+		Account byID = aServ.getAccountById(aDTO.getAccountID());
+		int currentUserID = Integer.parseInt(ses.getAttribute("userID").toString());
+		int currentRole = Integer.parseInt(ses.getAttribute("role").toString());
+		if(currentRole != 1 && currentUserID != byID.getOwner().getUserID()) {
+			out = res.getWriter();
+			out.print(unauthorized);
+			System.out.println("POST accounts/withdraw wasn't a match");
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		}
+
+		//security passed
+		//update account with amount from aDTO, then aServ.updateAccount(newAccountDTO a)
+		byID.setBalance(byID.getBalance() - aDTO.getAmount());
+
+		//if withdraw would make balance negative, cancel the withdraw entirely
+		if(byID.getBalance() < 0.0) {
+			JSONmessage insufficientFunds = new JSONmessage("insufficient funds; withdraw cancelled");
+			String cancelled = om.writeValueAsString(insufficientFunds);
+			out = res.getWriter();
+			out.print(cancelled);
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		}
+
+		AccountDTO updatedDTO = new AccountDTO(byID.getAccountID(),byID.getBalance(),byID.getStatus().getStatusID(),byID.getType().getTypeID(),byID.getOwner().getUserID());
+		aServ.updateAccount(updatedDTO);
+
+		JSONmessage successMsg = new JSONmessage("$"+aDTO.getAmount()+" has been withdrawn from Account #"+aDTO.accountID);
+		String withdrawn = om.writeValueAsString(successMsg);
+		out.print(withdrawn);
+		res.setStatus(200);
+		res.setContentType("application/json");
+
+	}
+
+	public void deposit(HttpServletRequest req, HttpServletResponse res) throws IOException {
+		//req body comes in with many <br>. we add line by line via StringBuilder
+		StringBuilder in = new StringBuilder();
+
+		//req body has a builtin method to return an Object that reads the body line by line
+		BufferedReader reader = req.getReader();
+
+		String line = reader.readLine();
+		while(line != null) {
+			in.append(line);
+			line = reader.readLine();
+		}
+		String fullBodyContents = new String(in);
+
+		//now the object mapper can read the req Body into a Java Object
+		System.out.println(fullBodyContents);
+		AccountDTO aDTO = om.readValue(fullBodyContents, AccountDTO.class);
+		System.out.println("This DTO should only have 2 things");
+		System.out.println(aDTO.accountID);
+		System.out.println(aDTO.statusID + " should be null");
+		System.out.println(aDTO.amount);
+
+		//ensure that only admin or currentUserID = {accountID} request this
+		HttpSession ses = req.getSession(false);
+		PrintWriter out = res.getWriter();
+		JSONmessage unauthorizedMsg = new JSONmessage("The requested action is not permitted");
+		String unauthorized = om.writeValueAsString(unauthorizedMsg);
+
+		if(ses == null) {
+			out = res.getWriter();
+			System.out.println("No Active Sesssion in POST /accounts/deposit");
+			out.print(unauthorized);
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		} 
+		Account byID = aServ.getAccountById(aDTO.getAccountID());
+		int currentUserID = Integer.parseInt(ses.getAttribute("userID").toString());
+		int currentRole = Integer.parseInt(ses.getAttribute("role").toString());
+		if(currentRole != 1 && currentUserID != byID.getOwner().getUserID()) {
+			out = res.getWriter();
+			out.print(unauthorized);
+			System.out.println("POST accounts/deposit wasn't a match");
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		}
+
+		//security passed
+		//update account with amount from aDTO, then aServ.updateAccount(newAccountDTO a)
+		byID.setBalance(byID.getBalance() + aDTO.getAmount());
+		AccountDTO updatedDTO = new AccountDTO(byID.getAccountID(),byID.getBalance(),byID.getStatus().getStatusID(),byID.getType().getTypeID(),byID.getOwner().getUserID());
+		aServ.updateAccount(updatedDTO);
+
+		JSONmessage successMsg = new JSONmessage("$"+aDTO.getAmount()+" has been deposited to Account #"+aDTO.accountID);
+		String deposited = om.writeValueAsString(successMsg);
+		out.print(deposited);
+		res.setStatus(200);
+		res.setContentType("application/json");
+
+	}
+
+	public void transfer(HttpServletRequest req, HttpServletResponse res) throws IOException {
+		//req body comes in with many <br>. we add line by line via StringBuilder
+		StringBuilder in = new StringBuilder();
+
+		//req body has a builtin method to return an Object that reads the body line by line
+		BufferedReader reader = req.getReader();
+
+		String line = reader.readLine();
+		while(line != null) {
+			in.append(line);
+			line = reader.readLine();
+		}
+		String fullBodyContents = new String(in);
+
+		//now the object mapper can read the req Body into a Java Object
+		System.out.println(fullBodyContents);
+		TransferDTO tDTO = om.readValue(fullBodyContents, TransferDTO.class);
+		System.out.println("This DTO should only have 3 things");
+		System.out.println("source acc: " + tDTO.sourceAccountID);
+		System.out.println("target acc: " + tDTO.targetAccountID);
+		System.out.println("transfering : $" + tDTO.amount);
+
+		//ensure that only admin or currentUserID = {sourceAccountID} request this
+		HttpSession ses = req.getSession(false);
+		PrintWriter out = res.getWriter();
+		JSONmessage unauthorizedMsg = new JSONmessage("The requested action is not permitted");
+		String unauthorized = om.writeValueAsString(unauthorizedMsg);
+
+		if(ses == null) {
+			out = res.getWriter();
+			System.out.println("No Active Sesssion in POST /accounts/withdraw");
+			out.print(unauthorized);
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		} 
+		Account srcByID = aServ.getAccountById(tDTO.sourceAccountID);
+		int currentUserID = Integer.parseInt(ses.getAttribute("userID").toString());
+		int currentRole = Integer.parseInt(ses.getAttribute("role").toString());
+		if(currentRole != 1 && currentUserID != srcByID.getOwner().getUserID()) {
+			out = res.getWriter();
+			out.print(unauthorized);
+			System.out.println("source Acc & current Session acc weren't a match");
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		}
+
+		//security passed
+		//update src_account withdraw tDTO.amount, 
+		//then update target_account deposit tDTO.amount 
+		srcByID.setBalance(srcByID.getBalance() - tDTO.amount);
+		//if withdraw would make balance negative, cancel the withdraw entirely
+		if(srcByID.getBalance() < 0.0) {
+			JSONmessage insufficientFunds = new JSONmessage("insufficient funds; transfer cancelled");
+			String cancelled = om.writeValueAsString(insufficientFunds);
+			out = res.getWriter();
+			out.print(cancelled);
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		}
+		Account targetByID = aServ.getAccountById(tDTO.targetAccountID);
+
+		targetByID.setBalance(targetByID.getBalance() + tDTO.amount);
+		AccountDTO updatedSrcDTO = new AccountDTO(srcByID.getAccountID(),srcByID.getBalance(),srcByID.getStatus().getStatusID(),srcByID.getType().getTypeID(),srcByID.getOwner().getUserID());
+		aServ.updateAccount(updatedSrcDTO);
+
+		AccountDTO updatedTargetDTO = new AccountDTO(targetByID.getAccountID(),targetByID.getBalance(),targetByID.getStatus().getStatusID(),targetByID.getType().getTypeID(),targetByID.getOwner().getUserID());
+		aServ.updateAccount(updatedTargetDTO);
+
+		JSONmessage successMsg = new JSONmessage("$"+tDTO.amount+" has been transfered from Account #"+ tDTO.sourceAccountID + " to Account #" + tDTO.targetAccountID);
+		String deposited = om.writeValueAsString(successMsg);
+		out.print(deposited);
 		res.setStatus(200);
 		res.setContentType("application/json");
 	}

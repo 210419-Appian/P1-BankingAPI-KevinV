@@ -4,7 +4,7 @@ package com.revature.models;
  * Temporary objects that are used to store info coming from outside our application,
  * if that information doesn't perfectly fit any already-existing ObjectType we made.
  * 
- * aka "this is an intermediary class to withdraw/deposit, compared to a full Account object"
+ * aka "this is an intermediary class to transfer(), compared to a full Account object"
  * 
  * We check this sourceAccountID against the current session/cookie.
  * If cookie.username == admin 

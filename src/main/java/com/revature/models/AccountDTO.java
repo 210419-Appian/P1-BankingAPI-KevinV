@@ -18,6 +18,35 @@ public class AccountDTO {
 	public int typeID;
 	public int ownerID;
 	public double amount;
+	
+	public AccountDTO() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+	
+	
+	//for withdraw/deposit
+	public AccountDTO(int accountID, double amount) {
+		super();
+		this.accountID = accountID;
+		this.amount = amount;
+	}
+
+
+
+	//for create/update Account
+	public AccountDTO(int accountID, double balance, int statusID, int typeID, int ownerID) {
+		super();
+		this.accountID = accountID;
+		this.balance = balance;
+		this.statusID = statusID;
+		this.typeID = typeID;
+		this.ownerID = ownerID;
+		this.amount = 0;
+	}
+
+
+
 	public int getAccountID() {
 		return accountID;
 	}

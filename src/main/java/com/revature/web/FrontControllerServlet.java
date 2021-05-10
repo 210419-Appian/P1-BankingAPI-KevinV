@@ -25,7 +25,7 @@ public class FrontControllerServlet extends HttpServlet{
 	int currentRole;
 	JSONmessage unauthorizedMsg = new JSONmessage("The requested action is not permitted");
 	ObjectMapper om = new ObjectMapper();
-	
+
 
 
 	private LoginController loginControl = new LoginController();
@@ -111,7 +111,7 @@ public class FrontControllerServlet extends HttpServlet{
 					uControl.getUserById(req,res, Integer.parseInt(sections[1]));
 					break;
 				}
-				
+
 				//check that only admins/employees can check-all-users
 				ses = req.getSession(false);
 				if(ses == null) {
@@ -122,7 +122,7 @@ public class FrontControllerServlet extends HttpServlet{
 					res.setContentType("application/json");
 					break;
 				} 
-				
+
 				currentRole = Integer.parseInt(ses.getAttribute("role").toString());
 				System.out.println("current role = " + currentRole);
 				if(currentRole != 1 && currentRole != 2) {
@@ -145,7 +145,7 @@ public class FrontControllerServlet extends HttpServlet{
 				out.print("<h1> you're doing users with the an unsupported HTTP Verb</h1>");
 			}
 			break;
-			
+
 		case "accounts":
 			if(req.getMethod().equals("GET")) {
 				if(sections.length == 3) {
@@ -176,7 +176,7 @@ public class FrontControllerServlet extends HttpServlet{
 						res.setContentType("application/json");
 						break;
 					} 
-					
+
 					currentRole = Integer.parseInt(ses.getAttribute("role").toString());
 					if(currentRole != 1 && currentRole != 2) {
 						out = res.getWriter();
@@ -190,13 +190,47 @@ public class FrontControllerServlet extends HttpServlet{
 					break;
 				}
 			} else if (req.getMethod().equals("POST")) {
-				//register new account
+				if (sections.length == 2) {
+					if(sections[1].equals("withdraw")) {
+						//grab req.body into AccountDTO & use it to update Account
+						//admin or currentUserID = {accountId}
+						accControl.withdraw(req,res);
+						break;
+					} else if (sections[1].equals("deposit")) {
+						//grab req.body into AccountDTO & use it to update Account
+						//admin or currentUserID = {accountId}
+						accControl.deposit(req,res);
+						break;
+					} else if (sections[1].equals("transfer")) {
+						//grab req.body into TransferDTO & use it to update both Account
+						//admin or currentUserID = {:sourceAccountId}
+						accControl.transfer(req,res);
+						break;
+					} else {
+						//invalid input
+						res.setContentType("text/html");
+						out = res.getWriter();
+						out.print("<h1> your POST to /accounts had invalid params in URL</h1>");
+						break;
+					} 					
+				} else if (sections.length == 1){
+					//TODO: pull req.body into AccountDTO & create new account
+					//admin, employee, or currentUserID = {:accountid}										
+				}
+
+
 			} else if (req.getMethod().equals("PUT")) {
 				//update account
 				//admin only
 				accControl.updateAccount(req,res);
 				break;
 			}
+		case "register":
+			if (req.getMethod().equals("POST")) {
+				//TODO: pull req.body into userDTO & create new User
+				//admin only
+			}
+			break;
 		default:
 			out = res.getWriter();
 			out.print("<h1> your router went to Default</h1>");
@@ -210,7 +244,7 @@ public class FrontControllerServlet extends HttpServlet{
 		//instead of making a new switch/case, we send it to the switchcase in our Get
 		doGet(req,res);
 	}
-	
+
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		doGet(req, resp);
