@@ -12,6 +12,7 @@ import javax.servlet.http.HttpSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.revature.models.JSONmessage;
 import com.revature.models.User;
+import com.revature.models.UserDTO;
 import com.revature.services.UserService;
 
 //requests to /users will go to this specific Controller
@@ -62,7 +63,7 @@ public class UserController {
 		JSONmessage unauthorizedMsg = new JSONmessage("The requested action is not permitted");
 		String unauthorized = om.writeValueAsString(unauthorizedMsg);
 
-		
+
 		if(ses == null) {
 			out = res.getWriter();
 			System.out.println("No Active Sesssion in PUT /users");
@@ -81,7 +82,7 @@ public class UserController {
 			res.setContentType("application/json");
 			return;
 		}
-		
+
 		//we've ensured that only admins or currentUser is requesting this
 		uServ.updateUser(u);
 		System.out.println("updated user");
@@ -97,7 +98,7 @@ public class UserController {
 		PrintWriter out = res.getWriter();
 		JSONmessage unauthorizedMsg = new JSONmessage("The requested action is not permitted");
 		String unauthorized = om.writeValueAsString(unauthorizedMsg);
-		
+
 		if(ses == null) {
 			out = res.getWriter();
 			System.out.println("No Active Sesssion in GET /users/{id}");
@@ -116,13 +117,85 @@ public class UserController {
 			res.setContentType("application/json");
 			return;
 		}
-		
+
 		//security passed; return userByID as JSON in res
 		User byID = uServ.getUserByID(id);
 		String byIDJSON = om.writeValueAsString(byID);
 		out.print(byIDJSON);
 		res.setStatus(200);
 		res.setContentType("application/json");
+
+	}
+
+	@SuppressWarnings("resource")
+	public void registerNewUser(HttpServletRequest req, HttpServletResponse res) throws IOException{
+		//req body comes in with many <br>. we add line by line via StringBuilder
+		StringBuilder in = new StringBuilder();
+
+		//req body has a builtin method to return an Object that reads the body line by line
+		BufferedReader reader = req.getReader();
+
+		String line = reader.readLine();
+		while(line != null) {
+			in.append(line);
+			line = reader.readLine();
+		}
+		String fullBodyContents = new String(in);
+
+		//now the object mapper can read the req Body into a Java Object
+		System.out.println(fullBodyContents);
+		UserDTO tempUser = om.readValue(fullBodyContents, UserDTO.class);
+
+
+		//ensure that only admin requests this
+		HttpSession ses = req.getSession(false);
+		PrintWriter out = res.getWriter();
+		JSONmessage unauthorizedMsg = new JSONmessage("The requested action is not permitted");
+		String unauthorized = om.writeValueAsString(unauthorizedMsg);
+
+		if(ses == null) {
+			out = res.getWriter();
+			System.out.println("No Active Sesssion in POST /register");
+			out.print(unauthorized);
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		} 
+
+		int currentRole = Integer.parseInt(ses.getAttribute("role").toString());
+		if(currentRole != 1) {
+			out = res.getWriter();
+			out.print(unauthorized);
+			System.out.println("only admins can /register users");
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		}
 		
+		//security passed
+		//create new User (userID will be serial)
+		List<String> usernames = uServ.getAllUsernames();
+		for(String s: usernames) {
+			//if new Username already exists, cancel the registration
+			if(tempUser.username.equals(s)) {
+				JSONmessage alreadyTaken = new JSONmessage("Invalid fields (username is taken)");
+				String cancelled = om.writeValueAsString(alreadyTaken);
+				out = res.getWriter();
+				out.print(cancelled);
+				res.setStatus(400);
+				res.setContentType("application/json");
+				out.close();
+				return;
+			}
+		}
+		if(uServ.addNewUser(tempUser)) {
+			System.out.println("added NEW user: " +tempUser.getUsername());
+			User updatedUser = uServ.getUserByUserName(tempUser.getUsername());
+			String updatedUserJSON = om.writeValueAsString(updatedUser);
+			out.print(updatedUserJSON);
+			res.setStatus(201);
+			res.setContentType("application/json");
+		}
+
 	}
 }

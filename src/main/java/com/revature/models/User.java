@@ -30,7 +30,7 @@ public class User {
 	//constructor WITHOUT id is for writing a New User to DB
 	public User(String username, String password, String fname, String lname, String email, Role role) {
 		super();
-		this.userID = userID;
+		this.userID = 0;
 		this.username = username;
 		this.password = password;
 		this.fname = fname;

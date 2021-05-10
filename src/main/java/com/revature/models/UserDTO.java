@@ -10,8 +10,13 @@ package com.revature.models;
  * These kinds of classes don't care about Encapsulation -> public fields
  */
 public class UserDTO {
+	public int userID;
 	public String username;
 	public String password;
+	public String fname;
+	public String lname;
+	public String email;
+	public int roleID;
 	
 	public UserDTO() {
 		super();
@@ -20,6 +25,18 @@ public class UserDTO {
 		super();
 		this.username = username;
 		this.password = password;
+	}
+	
+	
+	public UserDTO(int userID, String username, String password, String fname, String lname, String email, int roleID) {
+		super();
+		this.userID = userID;
+		this.username = username;
+		this.password = password;
+		this.fname = fname;
+		this.lname = lname;
+		this.email = email;
+		this.roleID = roleID;
 	}
 	public String getUsername() {
 		return username;

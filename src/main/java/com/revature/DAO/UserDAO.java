@@ -8,7 +8,7 @@ import com.revature.models.UserDTO;
 public interface UserDAO {
 	
 	
-	public void addUser(User a);
+	public boolean addUser(UserDTO tempUser);
 	
 	public List<User> getUsers();
 	public User getUserByUsername(String name);
@@ -19,5 +19,7 @@ public interface UserDAO {
 	public boolean deleteUser(User u);
 	public boolean deleteUserByUsername(String name);
 	public boolean deleteUserById(int id);
+
+	public List<String> getAllUsernames();
 
 }

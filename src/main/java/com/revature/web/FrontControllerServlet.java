@@ -88,7 +88,7 @@ public class FrontControllerServlet extends HttpServlet{
 				out.print("<h1> you are NOT logged in </h1>");
 			} else {
 				String name = (String) ses.getAttribute("username");
-				out.print("<h2> you logged in: " + name + ". Welcomae! </h2>");
+				out.print("<h2> you logged in: " + name + ". Welcome! </h2>");
 				out.print("<a href='logout'>Click Here to Log Out</a>");
 			}
 			break;
@@ -229,6 +229,7 @@ public class FrontControllerServlet extends HttpServlet{
 			if (req.getMethod().equals("POST")) {
 				//TODO: pull req.body into userDTO & create new User
 				//admin only
+				uControl.registerNewUser(req,res);
 			}
 			break;
 		default:

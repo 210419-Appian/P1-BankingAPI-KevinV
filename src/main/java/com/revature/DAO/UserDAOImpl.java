@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.revature.models.User;
+import com.revature.models.UserDTO;
 import com.revature.utils.ConnectionUtil;
 
 public class UserDAOImpl implements UserDAO {
@@ -16,8 +17,29 @@ public class UserDAOImpl implements UserDAO {
 	private static RoleDAO rDAO = new RoleDAOImpl();
 
 	@Override
-	public void addUser(User a) {
-		// TODO Auto-generated method stub
+	public boolean addUser(UserDTO a) {
+		try(Connection conn = ConnectionUtil.getConnection()){
+
+			String sql = "INSERT INTO users (username,password,fname,lname,email,roleID) VALUES (?,?,?,?,?,?);";
+			
+			int index = 0;
+			
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setString(++index, a.getUsername());
+			statement.setString(++index, a.getPassword());
+			statement.setString(++index, a.fname);
+			statement.setString(++index, a.lname);
+			statement.setString(++index, a.email);
+			statement.setInt(++index, a.roleID);
+			
+			statement.execute();
+			return true;
+
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+
+		return false;
 
 	}
 
@@ -192,6 +214,33 @@ public class UserDAOImpl implements UserDAO {
 	public boolean deleteUserById(int id) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public List<String> getAllUsernames() {
+		try(Connection conn = ConnectionUtil.getConnection()){
+
+			String sql = "SELECT username FROM users;";
+
+			Statement statement = conn.createStatement();
+			ResultSet result = statement.executeQuery(sql);
+
+			List<String> list = new ArrayList<>();
+
+			//resultSet's cursor means we can use result.next to return true and move the cursor
+			while(result.next()) {
+				//populate each username Obj with columns from the database table
+				String s = result.getString("username");
+				//finally, add each username to the List
+				list.add(s);
+			}
+			return list;
+
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+
+		return null;
 	}
 
 }

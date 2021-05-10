@@ -15,12 +15,10 @@ import com.revature.models.AccountDTO;
 import com.revature.models.JSONmessage;
 import com.revature.models.TransferDTO;
 import com.revature.services.AccountService;
-import com.revature.services.UserService;
 
 //requests to /account will go to this specific Controller
 //this Controller is NOT a servlet (no extending anything)
 public class AccountController {
-	private UserService uServ = new UserService();
 	private AccountService aServ = new AccountService();
 	private ObjectMapper om = new ObjectMapper();
 

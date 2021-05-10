@@ -36,4 +36,13 @@ public class UserService {
 		return uDAO.getUserByUsername(username);
 	}
 
+	public List<String> getAllUsernames() {
+		return uDAO.getAllUsernames();
+	}
+
+	public boolean addNewUser(UserDTO tempUser) {
+		return uDAO.addUser(tempUser);
+		
+	}
+
 }
