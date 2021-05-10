@@ -195,6 +195,11 @@ public class UserController {
 			out.print(updatedUserJSON);
 			res.setStatus(201);
 			res.setContentType("application/json");
+		} else {
+			res.setContentType("text/html");
+			res.setStatus(401);
+			out.print("<h1>Something went wrong in User Creation</h1>");
+			
 		}
 
 	}

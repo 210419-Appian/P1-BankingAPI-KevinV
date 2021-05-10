@@ -32,5 +32,9 @@ public class AccountService {
 		
 	}
 
+	public boolean addNewAccount(AccountDTO tempAcc) {
+		return accDAO.addAccount(tempAcc);
+	}
+
 
 }

@@ -19,8 +19,27 @@ public class AccountDAOImpl implements AccountDAO {
 	private static UserDAO uDAO = new UserDAOImpl();
 
 	@Override
-	public void addAccount(Account a) {
-		// TODO Auto-generated method stub
+	public boolean addAccount(AccountDTO a) {
+		try(Connection conn = ConnectionUtil.getConnection()){
+			
+			String sql = "INSERT INTO accounts (balance,status,TYPE,OWNER) VALUES (?,?,?,?);";
+			
+			int index = 0;
+			
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setDouble(++index, a.balance);
+			statement.setInt(++index, a.statusID);
+			statement.setInt(++index, a.typeID);
+			statement.setInt(++index, a.ownerID);
+
+			statement.execute();
+			return true;
+
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+
+		return false;
 
 	}
 

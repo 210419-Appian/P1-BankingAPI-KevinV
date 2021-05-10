@@ -404,4 +404,67 @@ public class AccountController {
 		res.setStatus(200);
 		res.setContentType("application/json");
 	}
+
+	public void createNewAccount(HttpServletRequest req, HttpServletResponse res) throws IOException{
+		//req body comes in with many <br>. we add line by line via StringBuilder
+		StringBuilder in = new StringBuilder();
+
+		//req body has a builtin method to return an Object that reads the body line by line
+		BufferedReader reader = req.getReader();
+
+		String line = reader.readLine();
+		while(line != null) {
+			in.append(line);
+			line = reader.readLine();
+		}
+		String fullBodyContents = new String(in);
+
+		//now the object mapper can read the req Body into a Java Object
+		System.out.println(fullBodyContents);
+		AccountDTO tempAcc = om.readValue(fullBodyContents, AccountDTO.class);
+
+
+		//ensure that only admin, employee, & currentUserID = {:ownerID} requests this
+		HttpSession ses = req.getSession(false);
+		PrintWriter out = res.getWriter();
+		JSONmessage unauthorizedMsg = new JSONmessage("The requested action is not permitted");
+		String unauthorized = om.writeValueAsString(unauthorizedMsg);
+
+		if(ses == null) {
+			out = res.getWriter();
+			System.out.println("No Active Sesssion in POST /accounts");
+			out.print(unauthorized);
+			res.setStatus(401);
+			res.setContentType("application/json");
+			return;
+		} 
+		
+		int currentUserID = Integer.parseInt(ses.getAttribute("userID").toString());
+		int currentRole = Integer.parseInt(ses.getAttribute("role").toString());
+		if(currentRole != 1 && currentRole != 2 && currentUserID!=tempAcc.ownerID) {
+			JSONmessage wrongPerson = new JSONmessage("You must be an admin, employee, or the accountHolder to create this account");
+			String cancelAccCreate = om.writeValueAsString(wrongPerson);
+			out = res.getWriter();
+			out.print(cancelAccCreate);
+			res.setStatus(400);
+			res.setContentType("application/json");
+			return;
+		}
+		
+		//security passed
+		//create new Account using AccountDTO
+		if(aServ.addNewAccount(tempAcc)) {
+			System.out.println("added NEW account for userID #: " +tempAcc.ownerID);
+			List<Account> updatedAccount = aServ.getAccountsByUserId(tempAcc.ownerID);
+			String updatedAccountJSON = om.writeValueAsString(updatedAccount);
+			out.print(updatedAccountJSON);
+			res.setStatus(201);
+			res.setContentType("application/json");
+		} else {
+			res.setContentType("text/html");
+			res.setStatus(401);
+			out.print("<h1>Something went wrong in Account Creation</h1>");
+			
+		}
+	}
 }

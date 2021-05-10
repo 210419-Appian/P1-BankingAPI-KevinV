@@ -215,7 +215,8 @@ public class FrontControllerServlet extends HttpServlet{
 					} 					
 				} else if (sections.length == 1){
 					//TODO: pull req.body into AccountDTO & create new account
-					//admin, employee, or currentUserID = {:accountid}										
+					//admin, employee, or currentUserID = {:accountid}	
+					accControl.createNewAccount(req,res);
 				}
 
 

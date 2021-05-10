@@ -7,7 +7,7 @@ import com.revature.models.AccountDTO;
 
 public interface AccountDAO {
 	
-	public void addAccount(Account a);
+	public boolean addAccount(AccountDTO tempAcc);
 	
 	public List<Account> getAllAccounts();
 	public Account getAccountById(int id);
